@@ -1,0 +1,2 @@
+imports:
+  - resource: 'vendor/youwe/testing-suite/config/default/grumphp.yml'
