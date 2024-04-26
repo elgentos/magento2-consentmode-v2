@@ -1,0 +1,7 @@
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd"
+>
+    <event name="hyva_config_generate_before">
+        <observer name="Elgentos_ConsentModeV2::register_module_config" instance="Elgentos\ConsentModeV2\Observer\RegisterModuleForHyvaConfig"/>
+    </event>
+</config>

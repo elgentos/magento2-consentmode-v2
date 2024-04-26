@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Config/etc/system_file.xsd">
+    <system>
+        <tab id="elgentos" translate="label" sortOrder="250">
+            <label>elgentos</label>
+        </tab>
+
+        <section id="elgentos_consentmodev2" translate="label" type="text" showInDefault="1" showInWebsite="1" showInStore="1">
+            <resource>Elgentos_ConsentModeV2::config</resource>
+            <label>Consent Mode V2</label>
+            <tab>elgentos</tab>
+
+            <group id="general" translate="label comment" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>General</label>
+                <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+
+                <field id="url_passthrough" translate="label tooltip" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Url Passthrough</label>
+                    <tooltip>It checks the current page URL for advertising parameters (gclid, dclid, gclsrc, _gl), and adds them to all internal link URLs the user might be clicking through</tooltip>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

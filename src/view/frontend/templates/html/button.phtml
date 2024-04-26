@@ -1,0 +1,24 @@
+<?php
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+
+/** @var Escaper $escaper */
+
+?>
+<div class="flex items-center flex-wrap justify-center w-full py-2 lg:mb-0 border-t border-blue-light">
+    <div x-data class="flex flex-row items-center justify-center w-full mb-2 lg:mb-0 divide-x">
+        <button @click="$dispatch('show-consent-popup')" class="content-center px-4 md:px-8 text-sm md:text-base">
+            <span>
+                <?= $escaper->escapeHtml(__('Cookie Settings')) ?>
+            </span>
+        </button>
+    </div>
+</div>

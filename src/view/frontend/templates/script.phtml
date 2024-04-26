@@ -1,0 +1,23 @@
+<script>
+    (function(){
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        if (localStorage.getItem('consent-mode') === null) {
+            gtag('consent', 'default', {
+                'ad_storage': 'denied',
+                'ad_user_data': 'denied',
+                'ad_personalization': 'denied',
+                'functionality_storage': 'denied',
+                'personalization_storage': 'denied',
+                'security_storage': 'denied',
+            });
+
+            return;
+        }
+
+        gtag('consent', 'default', JSON.parse(localStorage.getItem('consent-mode')));
+    })();
+</script>

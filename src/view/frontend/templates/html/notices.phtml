@@ -1,0 +1,220 @@
+<?php
+
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\HeroiconsOutline;
+use Hyva\Theme\ViewModel\Modal;
+use Hyva\Theme\ViewModel\Store as StoreViewModel;
+use Magento\Cookie\Block\Html\Notices;
+use Magento\Framework\Escaper;
+use Magento\Cookie\Helper\Cookie;
+
+/** @var Notices $block */
+/** @var Escaper $escaper */
+/** @var Cookie $cookieHelper */
+/** @var ViewModelRegistry $viewModels */
+
+/** @var Modal $modalViewModel */
+$modalViewModel = $viewModels->require(Modal::class);
+
+/** @var HeroiconsOutline $heroicons */
+$heroicons = $viewModels->require(HeroiconsOutline::class);
+
+/** @var StoreViewModel $storeViewModel */
+$storeViewModel = $viewModels->require(StoreViewModel::class);
+
+$cookieHelper = $block->getData('cookieHelper');
+
+if ($cookieHelper->isCookieRestrictionModeEnabled()): ?>
+    <script>
+        function initCookieBanner() {
+            window.dataLayer = window.dataLayer || [];
+
+            const isUserAllowedSaveCookieName = '<?= /* @noEscape */  Cookie::IS_USER_ALLOWED_SAVE_COOKIE ?>';
+            const currentWebsiteId = <?= (int) $storeViewModel->getStore()->getWebsiteId() ?>;
+
+            const isAllowedSaveCookie = () => {
+                const allowedCookies = hyva.getCookie(isUserAllowedSaveCookieName);
+                const allowedCookieWebsites = allowedCookies
+                    ? JSON.parse(unescape(allowedCookies))
+                    : [];
+
+                return allowedCookieWebsites[currentWebsiteId] !== undefined
+                    ? !! allowedCookieWebsites[currentWebsiteId]
+                    : false;
+            };
+
+            return {
+                    showCookieBanner: false,
+                    cookieName: isUserAllowedSaveCookieName,
+                    cookieValue: '<?= /* @noEscape */ $cookieHelper->getAcceptedSaveCookiesWebsiteIds() ?>',
+                    cookieLifetime: '<?= /* @noEscape */ $cookieHelper->getCookieRestrictionLifetime() ?>',
+                    noCookiesUrl: '<?= $escaper->escapeJs($block->getUrl('cookie/index/noCookies')) ?>',
+
+                gtag: function() {
+                    dataLayer.push(arguments);
+                },
+
+                checkAcceptCookies: function () {
+                    const consentMode = JSON.parse(localStorage.getItem('consent-mode'));
+
+                    if (consentMode === null || isAllowedSaveCookie() === null) {
+                        this.showCookieBanner = true;
+                    }
+                },
+
+                handleConsentButton: function (mode = 'all') {
+                    const consent = {
+                        necessary: true,
+                        marketing: false,
+                        analytics: false,
+                        preferences: false,
+                    };
+
+                    const consentCheckBoxes =  {
+                        minimal: "minimal",
+                        analytics: "consent-preferences",
+                        statistics: "consent-statistics",
+                        marketing: "consent-marketing"
+                    };
+
+                    switch (mode) {
+                        case 'deny':
+                            window.location.href = this.noCookiesUrl;
+                            break;
+                        case 'all':
+                            this.handleNativeConsent();
+
+                            for (const [key, value] of Object.entries(consentCheckBoxes)) {
+                                consent[key] = document.getElementById(value).checked = true;
+                            }
+                            break;
+                        case 'custom':
+                            this.handleNativeConsent();
+
+                            for (const [key, value] of Object.entries(consentCheckBoxes)) {
+                                consent[key] = document.getElementById(value).checked;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+
+                    this.setConsent(consent);
+
+                    this.showCookieBanner = false;
+                },
+
+
+                handleNativeConsent: function () {
+                    const cookieExpires = this.cookieLifetime /  60 / 60 / 24;
+                    hyva.setCookie(this.cookieName, this.cookieValue, cookieExpires);
+
+                    if (!hyva.getCookie(this.cookieName)) {
+                        window.location.href = this.noCookiesUrl;
+                        return;
+                    }
+
+                    window.dispatchEvent(new CustomEvent('user-allowed-save-cookie'));
+                },
+
+                setConsent: function (consent) {
+                    const consentMode = {
+                        'functionality_storage': consent.necessary ? 'granted' : 'denied',
+                        'security_storage': consent.necessary ? 'granted' : 'denied',
+                        'personalization_storage': consent.preferences ? 'granted' : 'denied',
+                        'analytics_storage': consent.statistics ? 'granted' : 'denied',
+                        'ad_storage': consent.marketing ? 'granted' : 'denied',
+                        'ad_user_data': consent.marketing ? 'granted' : 'denied',
+                        'ad_personalization': consent.marketing ? 'granted' : 'denied',
+                    };
+
+                    localStorage.setItem('consent-mode', JSON.stringify(consentMode));
+
+                    this.gtag('consent', 'update', consentMode);
+                },
+                eventListeners: {
+                    ['@show-consent-popup.window'](){
+                        this.showCookieBanner = true;
+                    },
+                }
+            }
+        }
+    </script>
+
+    <section x-data="initCookieBanner()" x-bind="eventListeners" @private-content-loaded.window="checkAcceptCookies()">
+        <div class="fixed inset-0 bg-black bg-opacity-50 z-40" aria-hidden="true" x-show="showCookieBanner" x-cloak="">
+            <div class="fixed flex justify-center items-center text-left z-50 inset-0">
+                <div class="inline-block bg-white shadow-xl rounded-lg max-h-screen overflow-auto p-4">
+                    <div>
+                        <div class="p-2 pr-4">
+                            <p class="mb-1">
+                                <span class="font-semibold">
+                                    <?= $escaper->escapeHtml(__('We use cookies to make your experience better.')) ?>
+                                </span>
+                            </p>
+                            <p class="mb-">
+                                <span>
+                                    <?= $escaper->escapeHtml(__( // phpcs:disable Generic.Files.LineLength.TooLong
+                                        'To comply with the new e-Privacy directive, we need to ask for your consent to set the cookies.'
+                                    )) // phpcs:enable ?>
+                                </span>
+                            </p>
+
+                            <p class="mb-4">
+                                <a href="<?= $escaper->escapeUrl($block->getPrivacyPolicyLink()) ?>"
+                                   class="underline">
+                                    <?= $escaper->escapeHtml(__('Read our policy')) ?>
+                                </a>
+                            </p>
+
+                            <div class="flex flex-col md:flex-row gap-1 md:gap-4 ">
+                                <div class="flex gap-2 items-center">
+                                    <input type="checkbox" id="minimal" name="minimal" checked disabled>
+                                    <label for="minimal"><?= $escaper->escapeHtml(__('Necessary')) ?></label>
+                                </div>
+
+                                <div class="flex gap-2 items-center">
+                                    <input type="checkbox" id="consent-preferences" name="consent-preferences">
+                                    <label for="consent-preferences"><?= $escaper->escapeHtml(__('Preferences')) ?></label>
+                                </div>
+
+                                <div class="flex gap-2 items-center">
+                                    <input type="checkbox" id="consent-statistics" name="consent-statistics">
+                                    <label for="consent-statistics"><?= $escaper->escapeHtml(__('Statistics')) ?></label>
+                                </div>
+
+                                <div class="flex gap-2 items-center">
+                                   <input type="checkbox" id="consent-marketing" name="consent-marketing">
+                                    <label for="consent-marketing"><?= $escaper->escapeHtml(__('Marketing')) ?></label>
+                                </div>
+                            </div>
+
+                            <div class="my-2 flex gap-4">
+                                <button @click="handleConsentButton('deny');"
+                                        id="btn-cookie-allow"
+                                        class="btn btn-secondary"
+                                >
+                                    <?= $escaper->escapeHtml(__('Deny all')) ?>
+                                </button>
+                                <button @click="handleConsentButton('custom');"
+                                        id="btn-cookie-allow"
+                                        class="btn btn-secondary"
+                                >
+                                    <?= $escaper->escapeHtml(__('Customize')) ?>
+                                </button>
+                                <button @click="handleConsentButton('all')"
+                                        id="btn-cookie-allow"
+                                        class="btn btn-primary"
+                                >
+                                    <?= $escaper->escapeHtml(__('Allow all')) ?>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            </div>
+        </div>
+    </section>
+<?php endif; ?>
