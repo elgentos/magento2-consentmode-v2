@@ -22,35 +22,5 @@
         "psr-4": {
             "Elgentos\\ConsentModeV2\\": "src/"
         }
-    },
-    "require-dev": {
-        "elgentos/testing-suite": "^0.2.1",
-        "youwe/coding-standard-magento2": "^2.0.0",
-        "phpstan/extension-installer": "^1.3",
-        "bitexpert/phpstan-magento": "^0.30.1"
-    },
-    "config": {
-        "sort-packages": true,
-        "allow-plugins": {
-            "elgentos/coding-standard-phpstorm": true,
-            "phpro/grumphp-shim": true,
-            "dealerdirect/phpcodesniffer-composer-installer": true,
-            "youwe/testing-suite": true,
-            "digitalrevolution/php-codesniffer-baseline": true
-        }
-    },
-    "archive": {
-        "exclude": [
-            "/.gitignore",
-            "/grumphp.yml",
-            "/pdepend.xml",
-            "/phpstan.neon",
-            "/phpunit.xml",
-            "/phpcs.xml",
-            "/phpmd.xml",
-            "/package.json",
-            "/.eslintrc.json",
-            "/.eslintignore"
-        ]
     }
 }
