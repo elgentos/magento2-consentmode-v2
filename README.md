@@ -43,10 +43,12 @@ Logic behind this:
 };
 ```
 
-When gtag consent default is set, an event is fired in GTM called: `default` When the settings are changed, the `update` event is fired.
+- When gtag consent default is set, an event is fired in GTM called: `default` When the settings are changed, the `update` event is fired.
 
 As you can see in this example:
 
 ![consent-example.png](consent-example.png)
+
+- It adds a button on the absolute bottom of the page so you can always open the cookie settings (this is intentionally not fixed on the viewport)
 
 Would be nice to have multiple events on multiple levels of consent you can add in GTM.
