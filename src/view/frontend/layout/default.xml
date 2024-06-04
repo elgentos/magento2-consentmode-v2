@@ -13,7 +13,16 @@
         <referenceBlock name="cookie_notices" remove="true" />
 
         <referenceContainer name="after.body.start">
-            <block class="Magento\Cookie\Block\Html\Notices" name="cookie_notices_content_mode_v2" template="Elgentos_ConsentModeV2::html/notices.phtml" />
+            <block class="Magento\Cookie\Block\Html\Notices" name="cookie_notices_content_mode_v2" template="Elgentos_ConsentModeV2::html/notices.phtml">
+                <block class="Magento\Theme\Block\Html\Header\Logo" name="cookie_notice.logo">
+                    <arguments>
+                        <argument name="logoPathResolver" xsi:type="object">Hyva\Theme\ViewModel\Logo\LogoPathResolver</argument>
+                        <!-- These values are used if no width or height is set in the adminhtml theme configuration -->
+                        <argument name="logo_width" xsi:type="number">215</argument>
+                        <argument name="logo_height" xsi:type="number">40</argument>
+                    </arguments>
+                </block>
+            </block>
         </referenceContainer>
 
         <referenceContainer name="before.body.end">

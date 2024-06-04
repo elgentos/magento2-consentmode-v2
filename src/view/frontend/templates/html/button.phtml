@@ -1,24 +1,30 @@
 <?php
+
 /**
- * Hyvä Themes - https://hyva.io
- * Copyright © Hyvä Themes 2020-present. All rights reserved.
- * This product is licensed per Magento install
- * See https://hyva.io/license
+ * Copyright © Elgentos. All rights reserved.
+ * https://elgentos.nl
  */
 
 declare(strict_types=1);
 
+// phpcs:disable Generic.Files.LineLength.TooLong
+
+/**
+ * @var Template $block
+ * @var Escaper $escaper
+ */
+
 use Magento\Framework\Escaper;
-
-/** @var Escaper $escaper */
-
+use Magento\Framework\View\Element\Template;
 ?>
-<div class="flex items-center flex-wrap justify-center w-full py-2 lg:mb-0 border-t border-blue-light">
-    <div x-data class="flex flex-row items-center justify-center w-full mb-2 lg:mb-0 divide-x">
-        <button @click="$dispatch('show-consent-popup')" class="content-center px-4 md:px-8 text-sm md:text-base">
-            <span>
-                <?= $escaper->escapeHtml(__('Cookie Settings')) ?>
-            </span>
+<div class="fixed right-0 bottom-0 p-4">
+    <div x-data>
+        <button
+            @click="$dispatch('show-consent-popup')"
+            class="flex justify-center items-center bg-primary shadow-lg rounded-full text-xl md:text-2xl w-12 h-12 md:w-14 md:h-14"
+            title="<?= $escaper->escapeHtmlAttr(__('Update Cookie Settings')) ?>"
+        >
+            <span>🍪</span>
         </button>
     </div>
 </div>
