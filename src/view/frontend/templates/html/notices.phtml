@@ -64,12 +64,29 @@ if (!$cookieHelper->isCookieRestrictionModeEnabled()) {
             cookieValue: '<?= /* @noEscape */ $cookieHelper->getAcceptedSaveCookiesWebsiteIds() ?>',
             cookieLifetime: '<?= /* @noEscape */ $cookieHelper->getCookieRestrictionLifetime() ?>',
             noCookiesUrl: '<?= $escaper->escapeJs($block->getUrl('cookie/index/noCookies')) ?>',
+            consentConfig: {
+                necessary: true,
+                marketing: false,
+                analytics: false,
+                preferences: false,
+            },
 
-            gtag: function () {
+            initialize() {
+                const cookies = JSON.parse(localStorage.getItem('consent-mode'));
+
+                this.consentConfig = {
+                    necessary: cookies['functionality_storage'] === 'granted',
+                    marketing: cookies['ad_storage'] === 'granted',
+                    analytics: cookies['analytics_storage'] === 'granted',
+                    preferences: cookies['personalization_storage'] === 'granted'
+                };
+            },
+
+            gtag(arguments) {
                 dataLayer.push(arguments);
             },
 
-            checkAcceptCookies: function () {
+            checkAcceptCookies() {
                 const consentMode = JSON.parse(localStorage.getItem('consent-mode'));
 
                 if (consentMode === null || isAllowedSaveCookie() === null) {
@@ -77,54 +94,34 @@ if (!$cookieHelper->isCookieRestrictionModeEnabled()) {
                 }
             },
 
-            handleConsentButton: function (mode = 'all') {
-                const consent = {
-                    necessary: true,
-                    marketing: false,
-                    analytics: false,
-                    preferences: false,
-                };
-
-                const consentCheckBoxes = {
-                    minimal: "minimal",
-                    analytics: "consent-preferences",
-                    statistics: "consent-statistics",
-                    marketing: "consent-marketing"
-                };
+            handleConsentButton(mode = 'all') {
+                this.handleNativeConsent();
 
                 switch (mode) {
                     case 'deny':
                         window.location.href = this.noCookiesUrl;
+
                         break;
                     case 'all':
-                        this.handleNativeConsent();
-
-                        for (const [key, value] of Object.entries(consentCheckBoxes)) {
-                            consent[key] = document.getElementById(value).checked = true;
+                        for (const [key, value] of Object.entries(this.consentConfig)) {
+                            this.consentConfig[key] = true;
                         }
                         break;
                     case 'custom':
-                        this.handleNativeConsent();
-
-                        for (const [key, value] of Object.entries(consentCheckBoxes)) {
-                            consent[key] = document.getElementById(value).checked;
+                        for (const [key, value] of Object.entries(this.consentConfig)) {
+                            this.consentConfig[key] = document.getElementById(`consent-${key}`).checked;
                         }
                         break;
                     default:
                         break;
                 }
 
-                this.setConsent(consent);
-
+                this.setConsent(this.consentConfig);
                 this.showCookieBanner = false;
                 this.showDetails = false;
             },
 
-            toggleShowDetails: function () {
-                this.showDetails = !this.showDetails;
-            },
-
-            handleNativeConsent: function () {
+            handleNativeConsent() {
                 const cookieExpires = this.cookieLifetime / 60 / 60 / 24;
                 hyva.setCookie(this.cookieName, this.cookieValue, cookieExpires);
 
@@ -136,19 +133,22 @@ if (!$cookieHelper->isCookieRestrictionModeEnabled()) {
                 window.dispatchEvent(new CustomEvent('user-allowed-save-cookie'));
             },
 
-            setConsent: function (consent) {
+            getCookieStatus(cookie) {
+                return this.consentConfig[cookie];
+            },
+
+            setConsent(consent) {
                 const consentMode = {
                     'functionality_storage': consent.necessary ? 'granted' : 'denied',
                     'security_storage': consent.necessary ? 'granted' : 'denied',
                     'personalization_storage': consent.preferences ? 'granted' : 'denied',
-                    'analytics_storage': consent.statistics ? 'granted' : 'denied',
+                    'analytics_storage': consent.analytics ? 'granted' : 'denied',
                     'ad_storage': consent.marketing ? 'granted' : 'denied',
                     'ad_user_data': consent.marketing ? 'granted' : 'denied',
                     'ad_personalization': consent.marketing ? 'granted' : 'denied',
                 };
 
                 localStorage.setItem('consent-mode', JSON.stringify(consentMode));
-
                 this.gtag('consent', 'update', consentMode);
             },
             eventListeners: {
@@ -161,167 +161,189 @@ if (!$cookieHelper->isCookieRestrictionModeEnabled()) {
 </script>
 
 <section
-    class="relative z-40"
-    x-data="initCookieBanner()"
-    x-bind="eventListeners"
-    @private-content-loaded.window="checkAcceptCookies()"
+        class="relative z-40"
+        x-data="initCookieBanner()"
+        x-init="initialize()"
+        x-bind="eventListeners"
+        @private-content-loaded.window="checkAcceptCookies()"
 >
     <!-- Cookie Details View -->
     <div
-        class="fixed p-4 flex items-center justify-center inset-0 bg-black/40 backdrop-blur z-20"
-        x-show="showCookieBanner && showDetails"
-        x-cloak
+            class="fixed p-4 flex items-center justify-center inset-0 bg-black/40 backdrop-blur z-20"
+            x-show="showCookieBanner && showDetails"
+            x-cloak
     >
         <div class="max-w-2xl bg-white p-6 rounded w-full h-[48rem] max-h-[90vh] shadow-lg overflow-y-auto">
-            <div class="inline-block bg-white shadow-xl rounded-lg max-h-screen overflow-auto p-4">
-                <div class="max-w-2xl bg-white p-6 rounded w-full h-[48rem] max-h-[90vh] shadow-lg overflow-y-auto">
-                    <div class="flex items-center justify-center mb-8">
-                        <?= $block->getChildHtml('cookie_notice.logo') ?>
+            <div class="flex items-center justify-center mb-8">
+                <?= $block->getChildHtml('cookie_notice.logo') ?>
+            </div>
+            <div class="divide-y divide-gray-dark space-y-4">
+                <div>
+                    <span class="block font-semibold text-2xl mb-4">
+                        <?= $escaper->escapeHtml(__('Cookie Settings')) ?>
+                    </span>
+                    <p>
+                        <?= $escaper->escapeHtml(
+                            __(
+                                'To use these Services, we need your consent. By clicking on “Accept all”, you declare your consent to the use of all Services. You can also declare your consent by individually clicking on the sliders for each category of cookies and save.'
+                            )
+                        ) ?>
+                    </p>
+                    <a
+                            class="text-primary text-sm font-medium inline-flex items-center gap-2 hover:underline"
+                            href="<?= $escaper->escapeUrl($block->getPrivacyPolicyLink()) ?>"
+                    >
+                        <?= $escaper->escapeHtml(__('Learn more')) ?>
+                        <?= $heroicons->arrowRightHtml('w-3 h-3', 12, 12) ?>
+                    </a>
+                </div>
+
+                <!-- Necessary Cookies -->
+                <div class="pt-4">
+                    <input
+                            type="checkbox"
+                            id="consent-necessary"
+                            name="consent-necessary"
+                            checked
+                            disabled
+                            class="hidden"
+                    >
+                    <span class="block font-semibold text-xl mb-4">
+                        <?= $escaper->escapeHtml(__('Necessary cookies')) ?>
+                    </span>
+                    <p>
+                        <?= $escaper->escapeHtml(
+                            __(
+                                'Necessary cookies help make a website usable by enabling basic functions like page navigation and access to secure areas of the website. The website cannot function properly without these cookies.'
+                            )
+                        ) ?>
+                    </p>
+                </div>
+
+                <!-- Preference Cookies -->
+                <div class="pt-4 flex items-start">
+                    <div>
+                        <span class="block font-semibold text-xl mb-4">
+                            <?= $escaper->escapeHtml(__('Preferences cookies')) ?>
+                        </span>
+                        <p>
+                            <?= $escaper->escapeHtml(
+                                __(
+                                    'Preference cookies enable a website to remember information that changes the way the website behaves or looks, like your preferred language or the region that you are in.'
+                                )
+                            ) ?>
+                        </p>
                     </div>
-                    <div class="divide-y divide-gray-dark space-y-4">
-                        <div>
-                            <span class="block font-semibold text-2xl mb-4">
-                                <?= $escaper->escapeHtml(__('Cookie Settings')) ?>
-                            </span>
-                            <p>
-                                <?= $escaper->escapeHtml(
-                                    __(
-                                        'To use these Services, we need your consent. By clicking on “Accept all”, you declare your consent to the use of all Services. You can also declare your consent by individually clicking on the sliders for each category of cookies and save.'
-                                    )
-                                ) ?>
-                            </p>
-                            <a
-                                class="text-primary text-sm font-medium inline-flex items-center gap-2 hover:underline"
-                                href="<?= $escaper->escapeUrl($block->getPrivacyPolicyLink()) ?>"
-                            >
-                                <?= $escaper->escapeHtml(__('Learn more')) ?>
-                                <?= $heroicons->arrowRightHtml('w-3 h-3', 12, 12) ?>
-                            </a>
-                        </div>
-
-                        <!-- Necessary Cookies -->
-                        <div class="pt-4">
-                            <input type="checkbox" id="minimal" name="minimal" checked disabled class="hidden">
-                            <span class="block font-semibold text-xl mb-4">
-                                <?= $escaper->escapeHtml(__('Necessary cookies')) ?>
-                            </span>
-                            <p>
-                                <?= $escaper->escapeHtml(
-                                    __(
-                                        'Necessary cookies help make a website usable by enabling basic functions like page navigation and access to secure areas of the website. The website cannot function properly without these cookies.'
-                                    )
-                                ) ?>
-                            </p>
-                        </div>
-
-                        <!-- Preference Cookies -->
-                        <div class="pt-4 flex items-start">
-                            <div>
-                                <span class="block font-semibold text-xl mb-4">
-                                    <?= $escaper->escapeHtml(__('Preferences cookies')) ?>
-                                </span>
-                                <p>
-                                    <?= $escaper->escapeHtml(
-                                        __(
-                                            'Preference cookies enable a website to remember information that changes the way the website behaves or looks, like your preferred language or the region that you are in.'
-                                        )
-                                    ) ?>
-                                </p>
-                            </div>
-                            <label for="consent-preferences" class="cursor-pointer inline-flex items-center">
-                                <input type="checkbox" id="consent-preferences" name="consent-preferences" class="sr-only peer">
-                                <div
-                                    class="relative h-6 w-11 rounded-full bg-gray-lighter peer-checked:bg-primary
-                                    after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:w-5 after:h-5 after:rounded-full after:bg-white after:border-1 after:border-gray-darker
-                                    after:duration-150 after:ease-in-out after:transition-all
-                                    after:peer-checked:translate-x-full
-                                "
-                                >
-                                </div>
-                                <span class="sr-only"><?= $escaper->escapeHtml(__('Toggle me')) ?></span>
-                            </label>
-                        </div>
-
-                        <!-- Statistic Cookies -->
-                        <div class="pt-4 flex items-start">
-                            <div>
-                                <span class="block font-semibold text-xl mb-4">
-                                    <?= $escaper->escapeHtml(__('Statistic cookies')) ?>
-                                </span>
-                                <p>
-                                    <?= $escaper->escapeHtml(
-                                        __(
-                                            'Statistic cookies help website owners to understand how visitors interact with websites by collecting and reporting information anonymously.'
-                                        )
-                                    ) ?>
-                                </p>
-                            </div>
-                            <label for="consent-statistics" class="cursor-pointer inline-flex items-center">
-                                <input type="checkbox" id="consent-statistics" name="consent-statistics" class="sr-only peer">
-                                <div
-                                    class="relative h-6 w-11 rounded-full bg-gray-lighter peer-checked:bg-primary
-                                    after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:w-5 after:h-5 after:rounded-full after:bg-white after:border-1 after:border-gray-darker
-                                    after:duration-150 after:ease-in-out after:transition-all
-                                    after:peer-checked:translate-x-full
-                                "
-                                >
-                                </div>
-                                <span class="sr-only"><?= $escaper->escapeHtml(__('Toggle me')) ?></span>
-                            </label>
-                        </div>
-                        <!-- Marketing Cookies -->
-                        <div class="pt-4 flex items-start">
-                            <div>
-                                <span class="block font-semibold text-xl mb-4">
-                                    <?= $escaper->escapeHtml(__('Marketing cookies')) ?>
-                                </span>
-                                <p>
-                                    <?= $escaper->escapeHtml(
-                                        __(
-                                            'Marketing cookies are used to track visitors across websites. The intention is to display ads that are relevant and engaging for the individual user and thereby more valuable for publishers and third party advertisers.'
-                                        )
-                                    ) ?>
-                                </p>
-                            </div>
-                            <label for="consent-marketing" class="cursor-pointer inline-flex items-center">
-                                <input type="checkbox" id="consent-marketing" name="consent-marketing" class="sr-only peer">
-                                <div
-                                    class="relative h-6 w-11 rounded-full bg-gray-lighter peer-checked:bg-primary
-                                    after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:w-5 after:h-5 after:rounded-full after:bg-white after:border-1 after:border-gray-darker
-                                    after:duration-150 after:ease-in-out after:transition-all
-                                    after:peer-checked:translate-x-full
-                                "
-                                >
-                                </div>
-                                <span class="sr-only"><?= $escaper->escapeHtml(__('Toggle me')) ?></span>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="flex flex-col md:flex-row gap-4 justify-between items-center mt-5">
-                        <button
-                            @click="handleConsentButton('custom')"
-                            id="btn-cookie-custom"
-                            class="rounded bg-white w-full md:w-auto text-gray-darker border border-gray-dark hover:bg-gray-lighter text-center px-4 py-2 rounded"
+                    <label for="consent-preferences" class="cursor-pointer inline-flex items-center">
+                        <input
+                                type="checkbox"
+                                id="consent-preferences"
+                                name="consent-preferences"
+                                class="sr-only peer"
+                                :checked="getCookieStatus('preferences')"
                         >
-                            <?= $escaper->escapeHtml(__('Customize')) ?>
-                        </button>
-                        <div class="ml-auto flex gap-4 w-full md:w-auto">
-                            <button
-                                @click="handleConsentButton('all')"
-                                id="btn-cookie-allow"
-                                class="rounded bg-primary w-full md:w-auto text-white text-center px-4 py-2 rounded hover:bg-secondary-darker"
-                            >
-                                <?= $escaper->escapeHtml(__('Accept all')) ?>
-                            </button>
-                            <button
-                                @click="handleConsentButton('deny')"
-                                id="btn-cookie-deny"
-                                class="rounded bg-primary w-full md:w-auto text-white text-center px-4 py-2 rounded hover:bg-secondary-darker"
-                            >
-                                <?= $escaper->escapeHtml(__('Deny all')) ?>
-                            </button>
+                        <div
+                                class="relative h-6 w-11 rounded-full bg-gray-lighter peer-checked:bg-primary
+                            after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:w-5 after:h-5 after:rounded-full after:bg-white after:border-1 after:border-gray-darker
+                            after:duration-150 after:ease-in-out after:transition-all
+                            after:peer-checked:translate-x-full
+                        "
+                        >
                         </div>
+                        <span class="sr-only"><?= $escaper->escapeHtml(__('Toggle me')) ?></span>
+                    </label>
+                </div>
+
+                <!-- Statistic Cookies -->
+                <div class="pt-4 flex items-start">
+                    <div>
+                        <span class="block font-semibold text-xl mb-4">
+                            <?= $escaper->escapeHtml(__('Statistic cookies')) ?>
+                        </span>
+                        <p>
+                            <?= $escaper->escapeHtml(
+                                __(
+                                    'Statistic cookies help website owners to understand how visitors interact with websites by collecting and reporting information anonymously.'
+                                )
+                            ) ?>
+                        </p>
                     </div>
+                    <label for="consent-analytics" class="cursor-pointer inline-flex items-center">
+                        <input
+                                type="checkbox"
+                                id="consent-analytics"
+                                name="consent-analytics"
+                                class="sr-only peer"
+                                :checked="getCookieStatus('analytics')"
+                        >
+                        <div
+                                class="relative h-6 w-11 rounded-full bg-gray-lighter peer-checked:bg-primary
+                            after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:w-5 after:h-5 after:rounded-full after:bg-white after:border-1 after:border-gray-darker
+                            after:duration-150 after:ease-in-out after:transition-all
+                            after:peer-checked:translate-x-full
+                        "
+                        >
+                        </div>
+                        <span class="sr-only"><?= $escaper->escapeHtml(__('Toggle me')) ?></span>
+                    </label>
+                </div>
+                <!-- Marketing Cookies -->
+                <div class="pt-4 flex items-start">
+                    <div>
+                        <span class="block font-semibold text-xl mb-4">
+                            <?= $escaper->escapeHtml(__('Marketing cookies')) ?>
+                        </span>
+                        <p>
+                            <?= $escaper->escapeHtml(
+                                __(
+                                    'Marketing cookies are used to track visitors across websites. The intention is to display ads that are relevant and engaging for the individual user and thereby more valuable for publishers and third party advertisers.'
+                                )
+                            ) ?>
+                        </p>
+                    </div>
+                    <label for="consent-marketing" class="cursor-pointer inline-flex items-center">
+                        <input
+                                type="checkbox"
+                                id="consent-marketing"
+                                name="consent-marketing"
+                                class="sr-only peer"
+                                :checked="getCookieStatus('marketing')"
+                        >
+                        <div
+                                class="relative h-6 w-11 rounded-full bg-gray-lighter peer-checked:bg-primary
+                            after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:w-5 after:h-5 after:rounded-full after:bg-white after:border-1 after:border-gray-darker
+                            after:duration-150 after:ease-in-out after:transition-all
+                            after:peer-checked:translate-x-full
+                        "
+                        >
+                        </div>
+                        <span class="sr-only"><?= $escaper->escapeHtml(__('Toggle me')) ?></span>
+                    </label>
+                </div>
+            </div>
+            <div class="flex flex-col md:flex-row gap-4 justify-between items-center mt-5">
+                <button
+                        @click="handleConsentButton('custom')"
+                        id="btn-cookie-custom"
+                        class="rounded bg-white w-full md:w-auto text-gray-darker border border-gray-dark hover:bg-gray-lighter text-center px-4 py-2 rounded"
+                >
+                    <?= $escaper->escapeHtml(__('Customize')) ?>
+                </button>
+                <div class="ml-auto flex gap-4 w-full md:w-auto">
+                    <button
+                            @click="handleConsentButton('all')"
+                            id="btn-cookie-allow"
+                            class="rounded bg-primary w-full md:w-auto text-white text-center px-4 py-2 rounded hover:bg-secondary-darker"
+                    >
+                        <?= $escaper->escapeHtml(__('Accept all')) ?>
+                    </button>
+                    <button
+                            @click="handleConsentButton('deny')"
+                            id="btn-cookie-deny"
+                            class="rounded bg-primary w-full md:w-auto text-white text-center px-4 py-2 rounded hover:bg-secondary-darker"
+                    >
+                        <?= $escaper->escapeHtml(__('Deny all')) ?>
+                    </button>
                 </div>
             </div>
         </div>
@@ -349,24 +371,24 @@ if (!$cookieHelper->isCookieRestrictionModeEnabled()) {
 
             <div class="flex flex-col md:flex-row gap-4 p-6 pt-0 justify-between items-center">
                 <button
-                    @click="toggleShowDetails()"
-                    id="btn-cookie-custom"
-                    class="rounded bg-primary w-full md:w-auto text-white text-center px-4 py-2 rounded hover:bg-secondary-darker"
+                        @click="showDetails = true"
+                        id="btn-cookie-custom"
+                        class="rounded bg-primary w-full md:w-auto text-white text-center px-4 py-2 rounded hover:bg-secondary-darker"
                 >
                     <?= $escaper->escapeHtml(__('Manage Settings')) ?>
                 </button>
                 <div class="md:ml-auto flex flex-col md:flex-row gap-4 w-full md:w-auto">
                     <button
-                        @click="handleConsentButton('deny')"
-                        id="btn-cookie-deny"
-                        class="rounded bg-white w-full md:w-auto text-gray-darker border border-gray-dark hover:bg-gray-lighter text-center px-4 py-2 rounded"
+                            @click="handleConsentButton('deny')"
+                            id="btn-cookie-deny"
+                            class="rounded bg-white w-full md:w-auto text-gray-darker border border-gray-dark hover:bg-gray-lighter text-center px-4 py-2 rounded"
                     >
                         <?= $escaper->escapeHtml(__('Block all cookies')) ?>
                     </button>
                     <button
-                        @click="handleConsentButton('all')"
-                        id="btn-cookie-allow"
-                        class="rounded bg-primary w-full md:w-auto text-white text-center px-4 py-2 rounded hover:bg-secondary-darker"
+                            @click="handleConsentButton('all')"
+                            id="btn-cookie-allow"
+                            class="rounded bg-primary w-full md:w-auto text-white text-center px-4 py-2 rounded hover:bg-secondary-darker"
                     >
                         <?= $escaper->escapeHtml(__('Accept all')) ?>
                     </button>
