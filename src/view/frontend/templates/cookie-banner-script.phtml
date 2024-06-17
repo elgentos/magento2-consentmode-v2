@@ -1,0 +1,154 @@
+<?php
+
+/**
+ * Copyright © Elgentos. All rights reserved.
+ * https://elgentos.nl
+ */
+
+declare(strict_types=1);
+
+// phpcs:disable Generic.Files.LineLength.TooLong
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\Store as StoreViewModel;
+use Magento\Cookie\Block\Html\Notices;
+use Magento\Framework\Escaper;
+use Magento\Cookie\Helper\Cookie;
+
+/** @var Notices $block */
+/** @var Escaper $escaper */
+/** @var Cookie $cookieHelper */
+/** @var ViewModelRegistry $viewModels */
+
+/** @var StoreViewModel $storeViewModel */
+$storeViewModel = $viewModels->require(StoreViewModel::class);
+
+/** @var Cookie $cookieHelper */
+$cookieHelper = $block->getData('cookieHelper');
+
+if (!$cookieHelper->isCookieRestrictionModeEnabled()) {
+    return;
+}
+
+?>
+
+<script>
+    function initCookieBanner() {
+        window.dataLayer = window.dataLayer || [];
+
+        const isUserAllowedSaveCookieName = '<?= /* @noEscape */  Cookie::IS_USER_ALLOWED_SAVE_COOKIE ?>';
+        const currentWebsiteId = <?= (int)$storeViewModel->getStore()->getWebsiteId() ?>;
+
+        const isAllowedSaveCookie = () => {
+            const allowedCookies = hyva.getCookie(isUserAllowedSaveCookieName);
+            const allowedCookieWebsites = allowedCookies
+                ? JSON.parse(unescape(allowedCookies))
+                : [];
+
+            return allowedCookieWebsites[currentWebsiteId] !== undefined
+                ? !!allowedCookieWebsites[currentWebsiteId]
+                : false;
+        };
+
+        return {
+            showCookieBanner: false,
+            showDetails: false,
+            cookieName: isUserAllowedSaveCookieName,
+            cookieValue: '<?= /* @noEscape */ $cookieHelper->getAcceptedSaveCookiesWebsiteIds() ?>',
+            cookieLifetime: '<?= /* @noEscape */ $cookieHelper->getCookieRestrictionLifetime() ?>',
+            noCookiesUrl: '<?= $escaper->escapeJs($block->getUrl('cookie/index/noCookies')) ?>',
+            consentConfig: {
+                necessary: true,
+                marketing: false,
+                analytics: false,
+                preferences: false,
+            },
+
+            initialize() {
+                const cookies = JSON.parse(localStorage.getItem('consent-mode'));
+
+                this.consentConfig = {
+                    necessary: cookies['functionality_storage'] === 'granted',
+                    marketing: cookies['ad_storage'] === 'granted',
+                    analytics: cookies['analytics_storage'] === 'granted',
+                    preferences: cookies['personalization_storage'] === 'granted'
+                };
+            },
+
+            gtag(arguments) {
+                dataLayer.push(arguments);
+            },
+
+            checkAcceptCookies() {
+                const consentMode = JSON.parse(localStorage.getItem('consent-mode'));
+
+                if (consentMode === null || isAllowedSaveCookie() === null) {
+                    this.showCookieBanner = true;
+                }
+            },
+
+            handleConsentButton(mode = 'all') {
+                this.handleNativeConsent();
+
+                switch (mode) {
+                    case 'deny':
+                        window.location.href = this.noCookiesUrl;
+
+                        break;
+                    case 'all':
+                        for (const [key, value] of Object.entries(this.consentConfig)) {
+                            this.consentConfig[key] = true;
+                        }
+                        break;
+                    case 'custom':
+                        for (const [key, value] of Object.entries(this.consentConfig)) {
+                            this.consentConfig[key] = document.getElementById(`consent-${key}`).checked;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+
+                this.setConsent(this.consentConfig);
+                this.showCookieBanner = false;
+                this.showDetails = false;
+            },
+
+            handleNativeConsent() {
+                const cookieExpires = this.cookieLifetime / 60 / 60 / 24;
+                hyva.setCookie(this.cookieName, this.cookieValue, cookieExpires);
+
+                if (!hyva.getCookie(this.cookieName)) {
+                    window.location.href = this.noCookiesUrl;
+                    return;
+                }
+
+                window.dispatchEvent(new CustomEvent('user-allowed-save-cookie'));
+            },
+
+            getCookieStatus(cookie) {
+                return this.consentConfig[cookie];
+            },
+
+            setConsent(consent) {
+                const consentMode = {
+                    'functionality_storage': consent.necessary ? 'granted' : 'denied',
+                    'security_storage': consent.necessary ? 'granted' : 'denied',
+                    'personalization_storage': consent.preferences ? 'granted' : 'denied',
+                    'analytics_storage': consent.analytics ? 'granted' : 'denied',
+                    'ad_storage': consent.marketing ? 'granted' : 'denied',
+                    'ad_user_data': consent.marketing ? 'granted' : 'denied',
+                    'ad_personalization': consent.marketing ? 'granted' : 'denied',
+                };
+
+                localStorage.setItem('consent-mode', JSON.stringify(consentMode));
+                this.gtag('consent', 'update', consentMode);
+            },
+            eventListeners: {
+                ['@show-consent-popup.window']() {
+                    this.showCookieBanner = true;
+                },
+            }
+        }
+    }
+</script>

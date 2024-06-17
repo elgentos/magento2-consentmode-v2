@@ -14,6 +14,7 @@
 
         <referenceContainer name="after.body.start">
             <block class="Magento\Cookie\Block\Html\Notices" name="cookie_notices_content_mode_v2" template="Elgentos_ConsentModeV2::html/notices.phtml">
+                <block class="Magento\Cookie\Block\Html\Notices" name="cookie_banner_script" template="Elgentos_ConsentModeV2::cookie-banner-script.phtml" />
                 <block class="Magento\Theme\Block\Html\Header\Logo" name="cookie_notice.logo">
                     <arguments>
                         <argument name="logoPathResolver" xsi:type="object">Hyva\Theme\ViewModel\Logo\LogoPathResolver</argument>
