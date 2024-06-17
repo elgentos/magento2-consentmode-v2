@@ -67,6 +67,11 @@ if (!$cookieHelper->isCookieRestrictionModeEnabled()) {
             initialize() {
                 const cookies = JSON.parse(localStorage.getItem('consent-mode'));
 
+                //On a first domain visit consent-mode is not yet set so return to avoid a console error
+                if(!cookies) {
+                    return;
+                }
+
                 this.consentConfig = {
                     necessary: cookies['functionality_storage'] === 'granted',
                     marketing: cookies['ad_storage'] === 'granted',
