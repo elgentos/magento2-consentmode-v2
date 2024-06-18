@@ -97,6 +97,10 @@ if (!$cookieHelper->isCookieRestrictionModeEnabled()) {
 
                 switch (mode) {
                     case 'deny':
+                        for (const [key, value] of Object.entries(this.consentConfig)) {
+                            this.consentConfig[key] = false;
+                        }
+
                         window.location.href = this.noCookiesUrl;
 
                         break;
