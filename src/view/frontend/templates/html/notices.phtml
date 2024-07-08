@@ -190,7 +190,7 @@ $heroicons = $viewModels->require(HeroiconsOutline::class);
                 <button
                         @click="handleConsentButton('custom')"
                         id="btn-cookie-custom"
-                        class="rounded bg-white w-full md:w-auto text-gray-darker border border-gray-dark hover:bg-gray-lighter text-center px-4 py-2 rounded"
+                        class="rounded bg-white w-full md:w-auto text-gray-darker border border-gray-dark hover:bg-gray-lighter text-center px-4 py-2"
                 >
                     <?= $escaper->escapeHtml(__('Customize')) ?>
                 </button>
@@ -198,14 +198,14 @@ $heroicons = $viewModels->require(HeroiconsOutline::class);
                     <button
                             @click="handleConsentButton('all')"
                             id="btn-cookie-allow"
-                            class="rounded bg-primary w-full md:w-auto text-white text-center px-4 py-2 rounded hover:bg-secondary-darker"
+                            class="rounded bg-primary w-full md:w-auto text-white text-center px-4 py-2 hover:bg-secondary-darker"
                     >
                         <?= $escaper->escapeHtml(__('Accept all')) ?>
                     </button>
                     <button
                             @click="handleConsentButton('deny')"
                             id="btn-cookie-deny"
-                            class="rounded bg-primary w-full md:w-auto text-white text-center px-4 py-2 rounded hover:bg-secondary-darker"
+                            class="rounded bg-primary w-full md:w-auto text-white text-center px-4 py-2 hover:bg-secondary-darker"
                     >
                         <?= $escaper->escapeHtml(__('Deny all')) ?>
                     </button>
@@ -238,7 +238,7 @@ $heroicons = $viewModels->require(HeroiconsOutline::class);
                 <button
                         @click="showDetails = true"
                         id="btn-cookie-custom"
-                        class="rounded bg-primary w-full md:w-auto text-white text-center px-4 py-2 rounded hover:bg-secondary-darker"
+                        class="rounded bg-primary w-full md:w-auto text-white text-center px-4 py-2 hover:bg-secondary-darker"
                 >
                     <?= $escaper->escapeHtml(__('Manage Settings')) ?>
                 </button>
@@ -246,14 +246,14 @@ $heroicons = $viewModels->require(HeroiconsOutline::class);
                     <button
                             @click="handleConsentButton('deny')"
                             id="btn-cookie-deny"
-                            class="rounded bg-white w-full md:w-auto text-gray-darker border border-gray-dark hover:bg-gray-lighter text-center px-4 py-2 rounded"
+                            class="rounded bg-white w-full md:w-auto text-gray-darker border border-gray-dark hover:bg-gray-lighter text-center px-4 py-2"
                     >
                         <?= $escaper->escapeHtml(__('Block all cookies')) ?>
                     </button>
                     <button
                             @click="handleConsentButton('all')"
                             id="btn-cookie-allow"
-                            class="rounded bg-primary w-full md:w-auto text-white text-center px-4 py-2 rounded hover:bg-secondary-darker"
+                            class="rounded bg-primary w-full md:w-auto text-white text-center px-4 py-2 hover:bg-secondary-darker"
                     >
                         <?= $escaper->escapeHtml(__('Accept all')) ?>
                     </button>
