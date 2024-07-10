@@ -13,7 +13,11 @@
         <referenceBlock name="cookie_notices" remove="true" />
 
         <referenceContainer name="after.body.start">
-            <block class="Magento\Cookie\Block\Html\Notices" name="cookie_notices_content_mode_v2" template="Elgentos_ConsentModeV2::html/notices.phtml">
+            <block class="Magento\Cookie\Block\Html\Notices"
+                   name="cookie_notices_content_mode_v2"
+                   template="Elgentos_ConsentModeV2::html/notices.phtml"
+                   ifconfig="elgentos_consentmodev2/general/enabled"
+            >
                 <block class="Magento\Cookie\Block\Html\Notices" name="cookie_banner_script" template="Elgentos_ConsentModeV2::cookie-banner-script.phtml" />
                 <block class="Magento\Theme\Block\Html\Header\Logo" name="cookie_notice.logo">
                     <arguments>
@@ -27,7 +31,11 @@
         </referenceContainer>
 
         <referenceContainer name="before.body.end">
-            <block name="cookie_notices_content_mode_v2_button" template="Elgentos_ConsentModeV2::html/button.phtml" />
+            <block
+                    name="cookie_notices_content_mode_v2_button"
+                    template="Elgentos_ConsentModeV2::html/button.phtml"
+                    ifconfig="elgentos_consentmodev2/general/enabled"
+            />
         </referenceContainer>
     </body>
 </page>
