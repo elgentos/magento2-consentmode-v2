@@ -1,10 +1,16 @@
-# magento2-consentmode-v2
+# elgentos/magento2-consentmode-v2
 
 This extension is based on the Hyva default cookie bar. All features that are in that extension are in this one. 
 
+- [Main Functionalities](#markdown-header-main-functionalities)
+- [Installation](#markdown-header-installation)
+- [Configuration](#markdown-header-configuration)
+
+## Main Functionalities
+
 This extension:
-- removes the default Hyva cookie bar
-- sets default consentMode
+- Overrides the default Hyva cookie bar
+- Sets default consentMode
 
 ``
   gtag('consent', 'default', {
@@ -53,7 +59,7 @@ As you can see in this example:
 
 Would be nice to have multiple events on multiple levels of consent you can add in GTM.
 
-## How to install:
+## Installation
 
 1. Install the package into your repository using composer.
 ```
@@ -65,13 +71,15 @@ composer require elgentos/magento2-consentmode-v2
 bin/magento module:enable Elgentos_ConsentModeV2
 ```
 
-3. Enable the module in the Magento backend.
+## Configuration
+
+1. Enable the module in the Magento backend.
    - Navigate to "Stores → Configuration → Extensions → Elgentos → Consent Mode V2".
    - Set the option "Enabled" to yes.
    
 ![img.png](img.png)
 
-4. Turn on "Cookie Restriction Mode".
+2. Turn on "Cookie Restriction Mode".
    - Navigate to "Stores → Configuration → General → Web → Default Cookie Settings → Cookie Restriction Mode"
    - Uncheck "Use system value" and set the option "Cookie Restriction Mode" to "Yes".
 
