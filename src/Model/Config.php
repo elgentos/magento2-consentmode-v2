@@ -26,7 +26,7 @@ class Config implements ConfigurationInterface
     ) {
     }
 
-    public function isEnabled(int $storeId = null): bool
+    public function isEnabled(?int $storeId = null): bool
     {
         return (bool)$this->config->getValue(
             self::CONFIG_CONSENTMODE_ENALBED,
@@ -35,7 +35,7 @@ class Config implements ConfigurationInterface
         );
     }
 
-    public function isUrlPassThroughEnabled(int $storeId = null): bool
+    public function isUrlPassThroughEnabled(?int $storeId = null): bool
     {
         return (bool)$this->config->getValue(
             self::CONFIG_URL_PASSTHROUGH_ENALBED,
@@ -44,7 +44,7 @@ class Config implements ConfigurationInterface
         );
     }
 
-    public function getStoreId(int $storeId = null): int
+    public function getStoreId(?int $storeId = null): int
     {
         return (int)$this->storeManager
             ->getStore($storeId)
