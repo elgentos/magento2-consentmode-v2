@@ -10,8 +10,6 @@
                 ifconfig="elgentos_consentmodev2/general/enabled" />
         </referenceBlock>
 
-        <referenceBlock name="cookie_notices" remove="true" />
-
         <referenceContainer name="after.body.start">
             <block class="Magento\Cookie\Block\Html\Notices"
                    name="cookie_notices_content_mode_v2"

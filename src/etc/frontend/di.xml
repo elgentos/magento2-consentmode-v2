@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\Cookie\Block\Html\Notices">
+        <plugin name="elgentos_consentmodev2_suppress_core_cookie_notice" type="Elgentos\ConsentModeV2\Plugin\SuppressCoreCookieNotice"/>
+    </type>
+</config>
