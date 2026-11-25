@@ -50,12 +50,34 @@ if (!$cookieHelper->isCookieRestrictionModeEnabled()) {
                 : false;
         };
 
+        // Build the cookie value in the browser, so request cookie data never ends up in cacheable HTML
+        const getAcceptedSaveCookiesWebsiteIds = () => {
+            let allowedCookieWebsites = {};
+
+            try {
+                const allowedCookies = hyva.getCookie(isUserAllowedSaveCookieName);
+                const parsedCookie = allowedCookies ? JSON.parse(unescape(allowedCookies)) : {};
+
+                if (parsedCookie && typeof parsedCookie === 'object') {
+                    allowedCookieWebsites = Object.assign({}, parsedCookie);
+                }
+            } catch (e) {
+                allowedCookieWebsites = {};
+            }
+
+            allowedCookieWebsites[currentWebsiteId] = 1;
+
+            return JSON.stringify(allowedCookieWebsites);
+        };
+
         return {
             showCookieBanner: false,
             showDetails: false,
             cookieName: isUserAllowedSaveCookieName,
-            cookieValue: '<?= /* @noEscape */ $cookieHelper->getAcceptedSaveCookiesWebsiteIds() ?>',
-            cookieLifetime: '<?= /* @noEscape */ $cookieHelper->getCookieRestrictionLifetime() ?>',
+            get cookieValue() {
+                return getAcceptedSaveCookiesWebsiteIds();
+            },
+            cookieLifetime: <?= (int) $cookieHelper->getCookieRestrictionLifetime() ?>,
             noCookiesUrl: '<?= $escaper->escapeJs($block->getUrl('cookie/index/noCookies')) ?>',
             consentConfig: {
                 necessary: true,
